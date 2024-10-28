@@ -33,17 +33,27 @@ public class ClientThread extends ChatServer implements Runnable{
             out = new PrintWriter(socket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-            //while the socket is still alive
-            while(!socket.isClosed()) {
+            // while the socket is still connected
+            while (!socket.isClosed()) {
                 String input = in.readLine();
-                if(input != null){
-                    for(ClientThread client : clients) {
-                        client.getWriter().write(input);
+                if (input != null) {
+                    synchronized (clients) {  // synchronize to prevent concurrent modification
+                        for (ClientThread client : clients) {
+                            if (client != this) {  // skip the sender client
+                                client.getWriter().println(input); // send message to each client
+                            }
+                        }
                     }
                 }
             }
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            try {
+                socket.close(); // Close socket when finished
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
     public PrintWriter getWriter() {

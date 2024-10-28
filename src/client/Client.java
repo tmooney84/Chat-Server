@@ -15,7 +15,7 @@ public class Client {
         try{
             socket = new Socket("localhost", portNumber);
             Thread.sleep(1000);
-            Thread server = new Thread(new ServerThread(socket,name));
+            Thread server = new Thread(new ServerThread(socket, name));
             server.start();
 
         } catch(IOException e){
