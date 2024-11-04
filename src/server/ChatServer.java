@@ -6,46 +6,52 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ChatServer{
+public class ChatServer {
     //create a static Server socket at the beginning of main in the ChatServer class and instantiate
     //with a port number (>1000)
-    public static int portNumber = 4444;
-    public static List<ClientThread> clients = new ArrayList<>();
+    private static final int portNumber = 4444;
 
-    public static void main(String[] args){
+    private int serverPort;
+    public static List<ClientThread> clients;
+
+    public static void main(String[] args) {
+        ChatServer server = new ChatServer(portNumber);
+        server.startServer();
+    }
+
+    public ChatServer(int portNumber) {
+        this.serverPort = portNumber;
+    }
+
+    public List<ClientThread> getClients() {
+        return clients;
+    }
+
+    private void startServer() {
+        clients = new ArrayList<ClientThread>();
         ServerSocket serverSocket = null;
-
-        try{
-            serverSocket = new ServerSocket(portNumber);
-            //Do I need to pass in the instantiated serverSocket in acceptClients?
-            System.out.println("Server started. Listening on port " + portNumber);
+        try {
+            serverSocket = new ServerSocket(serverPort);
             acceptClients(serverSocket);
-        } catch (IOException e){
-            System.err.println("Could not listen on port: " + portNumber);
+        } catch (IOException e) {
+            System.err.println("Could not listen on port: " + serverPort);
             System.exit(1);
         }
     }
 
-    public static void acceptClients(ServerSocket serverSocket){
-        while(true){
+    private void acceptClients(ServerSocket serverSocket) {
+        System.out.println("server starts port= " + serverSocket.getLocalSocketAddress());
+        while (true) {
             try {
                 Socket socket = serverSocket.accept();
-                ClientThread client = new ClientThread(socket);
-                synchronized (clients){
-                    clients.add(client);
-                }
-                new Thread(client).start();
-            } catch(IOException e){
-                System.out.println("Accept failed on: "+ portNumber);
+                System.out.print("accepts: " + socket.getRemoteSocketAddress());
+                ClientThread client = new ClientThread(this, socket);
+                Thread thread = new Thread(client);
+                thread.start();
+                clients.add(client);
+            } catch (IOException e) {
+                System.out.println("Accept failed on: " + serverPort);
             }
-            }
+        }
     }
-//      what do I need for the demo to function correctly...
-//    public static void broadcastMessage(String message){
-//        synchronized (clients){
-//            for (ClientThread client : clients) {
-//                client.getWriter().println(message); //sends message to each client
-//            }
-//        }
-//    }
 }

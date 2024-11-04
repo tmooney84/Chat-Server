@@ -5,24 +5,24 @@ import java.net.Socket;
 import java.util.Scanner;
 
 public class Client {
-    public static void main(String[] args) {
-        Socket socket = null;
-        System.out.println("Please input username:");
-        Scanner scan = new Scanner(System.in);
-        String name = scan.nextLine();
-        scan.close();
-        int portNumber = 4444;
-        try{
-            socket = new Socket("localhost", portNumber);
-            Thread.sleep(1000);
-            Thread server = new Thread(new ServerThread(socket, name));
-            server.start();
+    private static final String host = "localhost";
+    private static final int portNumber = 4444;
 
-        } catch(IOException e){
-            System.err.println("Fatal Connection error!");
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+    private String userName;
+    private String serverHost;
+    private int serverPort;
+    private Scanner userInputScanner;
+
+    public static void main(String[] args){
+        String readName = null;
+        Scanner scan = new Scanner(System.in);
+        System.out.println("Please input username:");
+        while(readName == null || readName.trim().equals("")){
+            //null, empty, whitespace(s) not allowed
+            readName = scan.nextLine();
+            if(readName == null || readName.trim().equals("")){
+                System.out.println("Invalid. Please enter again:");
+            }
         }
     }
 }
