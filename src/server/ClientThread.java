@@ -5,19 +5,27 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.Scanner;
 
-public class ClientThread extends ChatServer implements Runnable{
+public class ClientThread implements Runnable {
     private Socket socket;
-    private BufferedReader in;
-    private PrintWriter out;
+    private PrintWriter clientOut;
+    private ChatServer server;
 
-    public ClientThread(Socket socket) {
+    public ClientThread(ChatServer server, Socket socket) {
+        this.server = server;
         this.socket = socket;
     }
+    private PrintWriter getWriter(){
+        return clientOut;
+    }
+
     @Override
     public void run() {
         try {
-            /*
+            // setup
+
+            /* OLD NOTES FROM FIRST ITERATION
             socket.getOutputStream() retrieves the raw OutputStream associated with this
             specific socket. This OutputStream is a low-level, byte-based stream that allows
             data to be sent from the server to the client. However, handling raw bytes is
@@ -30,33 +38,27 @@ public class ClientThread extends ChatServer implements Runnable{
             By setting autoFlush to true, the server ensures that messages are sent to the
             client without unnecessary delays.
             */
-            out = new PrintWriter(socket.getOutputStream(), true);
-            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-            // while the socket is still connected
-            while (!socket.isClosed()) {
-                String input = in.readLine();
-                if (input != null) {
-                    synchronized (clients) {  // synchronize to prevent concurrent modification
-                        for (ClientThread client : clients) {
-                            if (client != this) {  // skip the sender client
-                                client.getWriter().println(input); // send message to each client
-                            }
-                        }
-                    }
-                }
+           this.clientOut = new PrintWriter(socket.getOutputStream(), false);
+           Scanner in = new Scanner(socket.getInputStream());
+
+           //start communicating
+            while(!socket.isClosed()) {
+               if(in.hasNextLine()) {
+                   String input = in.nextLine();
+                   // NOTE: if you want to check server can read input, uncomment next line and check
+                   // server file console
+                   // System.out.println(input);
+                   for(ClientThread thatClient : server.getClients()) {
+                       PrintWriter thatClientOut = thatClient.getWriter();
+                       if(thatClientOut != null) {
+                           thatClientOut.write(input + "\r\n");
+                       }
+                   }
+               }
             }
-        } catch (IOException e) {
+        } catch(IOException e){
             e.printStackTrace();
-        } finally {
-            try {
-                socket.close(); // Close socket when finished
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
-    }
-    public PrintWriter getWriter() {
-        return out;
     }
 }
